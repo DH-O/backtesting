@@ -1,7 +1,9 @@
 from backtesting.DRIP_backtest_w_contirb import calc_tr_series_with_monthly_contrib
 from backtesting.DRIP_backtest_w_contrib_PORT import run_backtest
-from config import BACKTEST_CONFIG, PORTFOLIO_CONFIGS
+from config.backtest import BACKTEST_CONFIG
+from config.portfolio import PORTFOLIO_CONFIGS
 from utils.plot_utils import save_portfolio_graphs
+from utils.correlation import get_portfolio_correlation, save_correlation_heatmap
 import logging
 from finance.logger import logger
 
@@ -10,6 +12,16 @@ logger.info(f"백테스트 설정: {BACKTEST_CONFIG}")
 logger.info(f"포트폴리오 구성: {PORTFOLIO_CONFIGS}")
 
 def main():
+    # 포트폴리오 상관관계 분석
+    logger.info("=== 포트폴리오 상관관계 분석 시작 ===")
+    correlation_matrix = get_portfolio_correlation()
+    if correlation_matrix is not None:
+        save_correlation_heatmap(correlation_matrix, output_dir="results")
+        logger.info("포트폴리오 상관관계 분석 완료")
+    else:
+        logger.error("포트폴리오 상관관계 분석 실패")
+
+    # 포트폴리오 백테스트
     results = {}
     for name, weights in PORTFOLIO_CONFIGS.items():
         cash_weight = 1.0 - sum(weights.values())

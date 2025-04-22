@@ -2,8 +2,8 @@ import pandas as pd
 from settings.data_download import download_data, download_fx_data
 from settings.data_trim import initialize_result_series
 from settings.invest import initialize_investment, apply_monthly_contribution, reinvest_dividends
-from statistics.calc_drawdowns import dual_mode_drawdown_analyzer
-from statistics.calc_return import compute_rolling_return
+from statistics_analysis.calc_drawdowns import dual_mode_drawdown_analyzer
+from statistics_analysis.calc_return import compute_rolling_return
 
 
 def calc_tr_series_with_monthly_contrib(ticker, start, end, initial_investment,
