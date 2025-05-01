@@ -1,11 +1,10 @@
-from backtesting.DRIP_backtest_w_contirb import calc_tr_series_with_monthly_contrib
-from backtesting.DRIP_backtest_w_contrib_PORT import run_backtest
+from backtest.DRIP_backtest_w_contrib_PORT import run_backtest
+from backtest.DRIP_backtest_w_contirb import calc_tr_series_with_monthly_contrib
 from config.backtest import BACKTEST_CONFIG
 from config.portfolio import PORTFOLIO_CONFIGS
 from utils.plot_utils import save_portfolio_graphs
-from utils.correlation import get_portfolio_correlation, save_correlation_heatmap
-import logging
-from finance.logger import logger
+from analysis.correlation.correlation import get_portfolio_correlation, save_correlation_heatmap
+from logger import logger
 
 logger.info("=== 백테스트 시작 ===")
 logger.info(f"백테스트 설정: {BACKTEST_CONFIG}")
@@ -14,7 +13,7 @@ logger.info(f"포트폴리오 구성: {PORTFOLIO_CONFIGS}")
 def main():
     # 포트폴리오 상관관계 분석
     logger.info("=== 포트폴리오 상관관계 분석 시작 ===")
-    correlation_matrix = get_portfolio_correlation()
+    correlation_matrix = get_portfolio_correlation(365*10)
     if correlation_matrix is not None:
         save_correlation_heatmap(correlation_matrix, output_dir="results")
         logger.info("포트폴리오 상관관계 분석 완료")
@@ -50,12 +49,12 @@ def main():
     logger.info("=== SPY DRIP 백테스트 시작 ===")
     try:
         results_baseline = calc_tr_series_with_monthly_contrib(
-            "SPY",
-            BACKTEST_CONFIG["start_date"],
-            BACKTEST_CONFIG["end_date"],
-            BACKTEST_CONFIG["initial_investment"],
-            BACKTEST_CONFIG["periodic_contribution"],
-            BACKTEST_CONFIG["contribution_interval_days"]
+            ticker="SPY",
+            start=BACKTEST_CONFIG["start_date"],
+            end=BACKTEST_CONFIG["end_date"],
+            initial_investment=BACKTEST_CONFIG["initial_investment"],
+            periodic_contribution=BACKTEST_CONFIG["periodic_contribution"],
+            interval_days=BACKTEST_CONFIG["contribution_interval_days"]
         )
         logger.info("SPY DRIP 백테스트 완료")
     except Exception as e:

@@ -3,9 +3,9 @@ import os
 from datetime import datetime
 
 def setup_logger():
-    # 현재 파일의 절대 경로를 기준으로 로그 디렉토리 설정
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    LOG_DIR = os.path.join(current_dir, '..', 'logs')
+    # 현재 작업 디렉토리를 기준으로 로그 디렉토리 설정
+    current_dir = os.getcwd()
+    LOG_DIR = os.path.join(current_dir, 'logs')
     
     # 로그 디렉토리 생성
     os.makedirs(LOG_DIR, exist_ok=True)
@@ -24,7 +24,7 @@ def setup_logger():
         logger.handlers.clear()
 
     # 파일 핸들러 설정
-    file_handler = logging.FileHandler(LOG_FILE, encoding='utf-8')
+    file_handler = logging.FileHandler(LOG_FILE, encoding='utf-8', mode='a')
     file_handler.setLevel(logging.INFO)
 
     # 콘솔 핸들러 설정

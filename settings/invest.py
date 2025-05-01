@@ -1,5 +1,5 @@
 import pandas as pd
-from finance.logger import logger
+from logger import logger
 
 def initialize_investment(ticker, hist, initial_investment, fx_hist):
     """

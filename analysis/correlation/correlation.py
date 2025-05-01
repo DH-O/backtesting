@@ -9,31 +9,19 @@ from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import seaborn as sns
 from config.portfolio import PORTFOLIO_CONFIGS
-from finance.logger import logger
+from logger import logger
 
-# 티커 정보 딕셔너리
-TICKER_INFO = {
-    '000660.KS': 'SK Hynix',
-    '003230.KS': 'Samyang Foods',
-    '005380.KS': 'Hyundai Motor',
-    '005930.KS': 'Samsung Electronics',
-    '006400.KS': 'Samsung SDI',
-    '035420.KS': 'NAVER',
-    '161510.KS': 'ARIRANG High Dividend',
-    '294400.KS': 'KODEX KOSPI200',
-    '411060.KS': 'ACE KRX Gold',
-    '438900.KS': 'KODEX Food',
-    '449450.KS': 'KODEX Defense',
-    '456610.KS': 'KODEX SOFR',
-    '458730.KS': 'KODEX Dow Jones Dividend',
-    '473590.KS': 'KODEX Bestseller',
-    '475350.KS': 'KODEX Berkshire Top 10',
-    '481190.KS': 'KODEX US Top 10',
-    'BTC-USD': 'Bitcoin',
-    'ETH-USD': 'Ethereum',
-    'NVDA': 'NVIDIA',
-    'SOL-USD': 'Solana'
-}
+def get_ticker_name(ticker):
+    """
+    yfinance를 통해 티커의 실제 이름을 가져옵니다.
+    """
+    try:
+        t = yf.Ticker(ticker)
+        info = t.info
+        return info.get('shortName', ticker)
+    except Exception as e:
+        logger.warning(f"{ticker}의 이름을 가져오는 중 에러 발생: {str(e)}")
+        return ticker
 
 def get_portfolio_correlation(lookback_days=365):
     """
@@ -57,6 +45,8 @@ def get_portfolio_correlation(lookback_days=365):
         
         # 각 자산의 수익률 데이터 가져오기
         all_prices = pd.DataFrame()
+        min_date = None
+        max_date = None
         
         for ticker in sorted(all_tickers):
             try:
@@ -70,6 +60,15 @@ def get_portfolio_correlation(lookback_days=365):
                 )
                 
                 if not data.empty and 'Close' in data.columns:
+                    # 각 티커별 데이터의 시작일과 종료일 추적
+                    ticker_start = data.index[0]
+                    ticker_end = data.index[-1]
+                    
+                    if min_date is None or ticker_start > min_date:
+                        min_date = ticker_start
+                    if max_date is None or ticker_end < max_date:
+                        max_date = ticker_end
+                    
                     all_prices[ticker] = data['Close']
                     logger.info(f"{ticker} 데이터 로드 성공 (데이터 수: {len(data)})")
                 else:
@@ -81,6 +80,9 @@ def get_portfolio_correlation(lookback_days=365):
         if all_prices.empty:
             logger.error("가격 데이터가 없습니다.")
             return None
+        
+        # 실제 분석 기간 로깅
+        logger.info(f"실제 분석 기간: {min_date.strftime('%Y-%m-%d')} ~ {max_date.strftime('%Y-%m-%d')}")
         
         # 결측치가 있는 날짜 제거
         all_prices = all_prices.dropna()
@@ -112,6 +114,9 @@ def save_correlation_heatmap(correlation_matrix, output_dir="analysis_results"):
         import os
         os.makedirs(output_dir, exist_ok=True)
         
+        # 티커 이름 동적으로 가져오기
+        ticker_names = {ticker: get_ticker_name(ticker) for ticker in correlation_matrix.columns}
+        
         # 히트맵 생성
         plt.figure(figsize=(20, 16))
         sns.heatmap(correlation_matrix, 
@@ -120,8 +125,8 @@ def save_correlation_heatmap(correlation_matrix, output_dir="analysis_results"):
                    cmap='coolwarm',
                    center=0,
                    square=True,
-                   xticklabels=[f"{ticker}\n{TICKER_INFO[ticker]}" for ticker in correlation_matrix.columns],
-                   yticklabels=[f"{ticker}\n{TICKER_INFO[ticker]}" for ticker in correlation_matrix.index])
+                   xticklabels=[f"{ticker}\n{ticker_names[ticker]}" for ticker in correlation_matrix.columns],
+                   yticklabels=[f"{ticker}\n{ticker_names[ticker]}" for ticker in correlation_matrix.index])
         plt.title('Portfolio Asset Correlation Heatmap', pad=20, fontsize=16)
         plt.xticks(rotation=45, ha='right')
         plt.yticks(rotation=0)
